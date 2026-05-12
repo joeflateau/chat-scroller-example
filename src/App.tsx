@@ -183,7 +183,15 @@ export default function App() {
         Scroll anchoring keeps you pinned to the bottom via{" "}
         <code className="text-rose-400">overflow-anchor: none</code> on messages
         + <code className="text-rose-400">overflow-anchor: auto</code> on a
-        sentinel element. Scroll up to break the anchor.
+        sentinel element. Scroll up to break the anchor.{" "}
+        <a
+          href="https://github.com/joeflateau/chat-scroller-example"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-rose-400 underline hover:text-rose-300"
+        >
+          View source on GitHub
+        </a>
       </div>
 
       {/* Chat area */}
