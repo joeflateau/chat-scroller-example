@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  #scroller {
+    height: 300px;
+    overflow-y: auto;
+    border: 2px solid #333;
+    background: #111;
+    color: #eee;
+    font-family: system-ui;
+  }
+  #scroller * {
+    overflow-anchor: none;
+  }
+  #anchor-wrapper {
+    height: 0;
+    position: relative;
+  }
+  #anchor {
+    overflow-anchor: auto;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    z-index: -1;
+  }
+  .msg {
+    padding: 8px 12px;
+    margin: 4px 8px;
+    background: #333;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body style="background:#000;color:#eee;font-family:system-ui;padding:20px">
+  <h3>overflow-anchor test</h3>
+  <p>Messages auto-add. Scroll up to break anchoring. Scroll back to bottom to re-engage.</p>
+  <div id="scroller">
+    <div id="anchor-wrapper"><div id="anchor"></div></div>
+  </div>
+  <script>
+    const scroller = document.getElementById('scroller');
+    const anchorWrapper = document.getElementById('anchor-wrapper');
+    let i = 0;
+    setInterval(() => {
+      const div = document.createElement('div');
+      div.className = 'msg';
+      div.textContent = `Message ${++i}: ${Date.now()}`;
+      scroller.insertBefore(div, anchorWrapper);
+    }, 400);
+  </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+#scroll-content {
+  overflow-anchor: none;
+  min-height: calc(100% + 50px);
+}
+#anchor {
+  overflow-anchor: auto;
+  height: 50px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
