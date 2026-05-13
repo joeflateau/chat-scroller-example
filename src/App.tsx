@@ -106,6 +106,11 @@ export default function App() {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
   const [atBottom, setAtBottom] = useState(true);
+  const atBottomRef = useRef(true);
+  const supportsAnchor = CSS.supports("overflow-anchor", "auto");
+  const [anchorMode, setAnchorMode] = useState<
+    "enabled" | "disabled" | "polyfill"
+  >(supportsAnchor ? "enabled" : "polyfill");
 
   const addMessage = useCallback((text: string, sender: "me" | "them") => {
     setMessages((prev) => [
@@ -152,12 +157,32 @@ export default function App() {
     const scroller = scrollerRef.current;
     if (!anchor || !scroller) return;
     const observer = new IntersectionObserver(
-      ([entry]) => setAtBottom(entry.isIntersecting),
+      ([entry]) => {
+        const val = entry.isIntersecting;
+        atBottomRef.current = val;
+        setAtBottom(val);
+      },
       { root: scroller, threshold: 0 },
     );
     observer.observe(anchor);
     return () => observer.disconnect();
   }, []);
+
+  // Polyfill: when anchoring is off or unavailable, use MutationObserver to
+  // scroll to bottom before paint whenever children are added
+  useEffect(() => {
+    if (anchorMode === "enabled") return;
+    const scroller = scrollerRef.current;
+    const content = scroller?.querySelector("#scroll-content");
+    if (!scroller || !content) return;
+    const observer = new MutationObserver(() => {
+      if (atBottomRef.current) {
+        scroller.scrollTop = scroller.scrollHeight;
+      }
+    });
+    observer.observe(content, { childList: true });
+    return () => observer.disconnect();
+  }, [anchorMode]);
 
   const scrollToBottom = useCallback(() => {
     const el = scrollerRef.current;
@@ -170,12 +195,38 @@ export default function App() {
       <header className="flex items-center gap-3 px-4 py-3 bg-slate-900 border-b border-slate-800 shrink-0">
         <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
         <span className="font-semibold text-lg">overflow-anchor Chat</span>
-        <button
-          onClick={() => setPaused((p) => !p)}
-          className="ml-auto px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 cursor-pointer transition-colors"
-        >
-          {paused ? "▶ Resume" : "⏸ Pause"}
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (!supportsAnchor) return;
+              setAnchorMode((m) => (m === "enabled" ? "disabled" : "enabled"));
+            }}
+            className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors ${
+              anchorMode === "enabled"
+                ? "bg-green-900/60 text-green-300 hover:bg-green-800/60"
+                : anchorMode === "disabled"
+                  ? "bg-red-900/60 text-red-300 hover:bg-red-800/60"
+                  : "bg-amber-900/60 text-amber-300 cursor-default"
+            }`}
+            title={
+              anchorMode === "polyfill"
+                ? "overflow-anchor not supported — using JS polyfill"
+                : `Click to ${anchorMode === "enabled" ? "disable" : "enable"} CSS anchoring`
+            }
+          >
+            {anchorMode === "enabled"
+              ? "⚓ Anchor: CSS"
+              : anchorMode === "disabled"
+                ? "⚓ Anchor: Off"
+                : "⚓ Anchor: Polyfill"}
+          </button>
+          <button
+            onClick={() => setPaused((p) => !p)}
+            className="px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 cursor-pointer transition-colors"
+          >
+            {paused ? "▶ Resume" : "⏸ Pause"}
+          </button>
+        </div>
       </header>
 
       {/* Info banner */}
@@ -199,6 +250,11 @@ export default function App() {
         id="scroller"
         ref={scrollerRef}
         className="flex-1 overflow-y-auto p-4"
+        style={
+          anchorMode === "disabled"
+            ? { overflowAnchor: "none" }
+            : undefined
+        }
       >
         <div id="scroll-content" className="flex flex-col gap-2 justify-end">
           {messages.map((msg) => (
